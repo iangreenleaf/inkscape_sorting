@@ -1,3 +1,6 @@
+;; This code is available on the World Wide Web as
+;; http://www.cs.grinnell.edu/~youngian/inkscape_mergesort.ss
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mergesort implementation ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -49,12 +52,18 @@
 ;;; Randomization functions ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Make Inkscape's randomization comply with standard Scheme behavior
+(define inkscape-random random) ;; off by one
+(define good-random 
+  (lambda (n)
+    (- (inkscape-random n) 1))) ;; correct
+
 ;; Returns ls without the element at index INDEX
 (define (delete-listref ls index)
-  (if (zero? index)
-      (list-tail ls 1)
-      (cons (car ls) 
-            (delete-listref (cdr ls) (- index 1)))))
+  (cond ((null? ls) '())
+        ((zero? index) (list-tail ls 1))
+        (else (cons (car ls)
+                    (delete-listref (cdr ls) (- index 1))))))
 
 ;; Returns ls with its elements in random order
 (define (randomize-list ls)
@@ -62,7 +71,7 @@
             (lambda (remain done)
               (if (null? remain)
                   done
-                  (let ((rnum (random (length remain))))
+                  (let ((rnum (good-random (length remain))))
                     (kernel (delete-listref remain rnum) (cons (list-ref remain rnum) done)))))))
     (kernel ls '())))
 
@@ -70,50 +79,60 @@
 
 ;; Random number library
 ;; (c) John Stone
-(define random-maker
-  (let* ((multiplier 48271)
-         (modulus 2147483647)
-         (apply-congruence
-          (lambda (current-seed)
-            (let ((candidate (modulo (* current-seed multiplier)
-                                     modulus)))
-              (if (zero? candidate)
-                  modulus
-                  candidate))))
-         (coerce
-          (lambda (proposed-seed)
-            (if (integer? proposed-seed)
-                (- modulus (modulo proposed-seed modulus))
-                19860617))))  ;; an arbitrarily chosen birthday
-  (lambda (initial-seed)
-    (let ((seed (coerce initial-seed)))
-      (lambda args
-        (cond ((null? args)
-               (set! seed (apply-congruence seed))
-               (/ (- modulus seed) modulus))
-              ((null? (cdr args))
-               (let* ((proposed-top
-                       (ceiling (abs (car args))))
-                      (exact-top
-                       (if (inexact? proposed-top)
-                           (inexact->exact proposed-top)
-                           proposed-top))
-                      (top
-                       (if (zero? exact-top)
-                           1
-                           exact-top)))
-                 (set! seed (apply-congruence seed))
-                 (inexact->exact (floor (* top (/ seed modulus))))))
-              ((eq? (cadr args) 'reset)
-               (set! seed (coerce (car args))))
-              (else
-               (display "random: unrecognized message")
-               (newline))))))))
+;; Warning: Currently returns strange values in TinyScheme.  Using a modification
+;; of InkscapeScheme's randomization instead.
+;(define random-maker
+;  (let* ((multiplier 48271)
+;         (modulus 2147483647)
+;         (apply-congruence
+;          (lambda (current-seed)
+;            (let ((candidate (modulo (* current-seed multiplier)
+;                                     modulus)))
+;              (if (zero? candidate)
+;                  modulus
+;                  candidate))))
+;         (coerce
+;          (lambda (proposed-seed)
+;            (if (integer? proposed-seed)
+;                (- modulus (modulo proposed-seed modulus))
+;                19860617))))  ;; an arbitrarily chosen birthday
+;  (lambda (initial-seed)
+;    (let ((seed (coerce initial-seed)))
+;      (lambda args
+;        (cond ((null? args)
+;               (set! seed (apply-congruence seed))
+;               (/ (- modulus seed) modulus))
+;              ((null? (cdr args))
+;               (let* ((proposed-top
+;                       (ceiling (abs (car args))))
+;                      (exact-top
+;                       (if (inexact? proposed-top)
+;                           (inexact->exact proposed-top)
+;                           proposed-top))
+;                      (top
+;                       (if (zero? exact-top)
+;                           1
+;                           exact-top)))
+;                 (set! seed (apply-congruence seed))
+;                 (inexact->exact (floor (* top (/ seed modulus))))))
+;              ((eq? (cadr args) 'reset)
+;               (set! seed (coerce (car args))))
+;              (else
+;               (display "random: unrecognized message")
+;               (newline))))))))
+;
+;(define random
+;  (random-maker 19781116))  ;; another arbitrarily chosen birthday
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Inkscape wrappers ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; An ugly hack for TinyScheme's benefit, since for some reason it won't recognize
+;; numbers passed from make-gradient
+(define (mknum n)
+  (string->number (number->string n)))
 
 ;; Accepts a list of rgb triplets and displays them as a row of rectangles
 ;; of specified width starting at coordinates startx,starty
@@ -121,10 +140,11 @@
   (lambda (ls desktop startx starty widthx height)
     (if (null? ls)
         '()
-        (begin (desktop-write-css desktop (string-append "stroke-opacity:0;fill-opacity:1;fill:" (rgb->hex (caar ls) (cadar ls) (caddar ls))))
-               ;(display (string-append "fill:" (rgb->hex (caar ls) (cadar ls) (caddar ls))))
+        (begin (display "one")
+          (desktop-write-css desktop (string-append "stroke-opacity:0;fill-opacity:1;fill:" (rgb->hex (mknum (caar ls)) (mknum (cadar ls)) (mknum (caddar ls)))))
+          (display "two")
                (cons (rectangle desktop "" startx starty widthx height 0 0)
-                     (list-to-rect (cdr ls) desktop (+ startx widthx) starty widthx height))))))
+                     (list-to-rect (cdr ls) desktop (- (+ startx widthx) 1) starty widthx height))))))
 
 ;; Accepts a list of lists and displays outlines to delineate the boundaries
 ;; of the lists (according to width and height), starting at coordinates startx,starty
@@ -133,8 +153,8 @@
     (if (null? ls)
         '()
         (begin (desktop-write-css desktop "stroke-opacity:1;fill-opacity:0")
-               (cons (rectangle desktop "" startx starty (* widthx (length (car ls))) height 0 0)
-                     (list-to-rect-outlines (cdr ls) desktop (+ startx (* widthx (length (car ls)))) starty widthx height))))))
+               (cons (rectangle desktop "" startx starty (* (- widthx 1) (length (car ls))) height 0 0)
+                     (list-to-rect-outlines (cdr ls) desktop (+ startx (* (- widthx 1) (length (car ls)))) starty widthx height))))))
 
 
 ;; Accepts a high and low rgb value and a number NUM, returns a list of rgb values
@@ -228,4 +248,5 @@
 ;(merge-sort-print ls2 rgb< pg 100 170 30 50)
 
 (desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000000;stroke-opacity:1")
-(merge-sort-print ls3 rgb< pg 100 170 30 50)
+;(merge-sort-print ls3 rgb< pg 100 170 30 50)
+(merge-sort-print (randomize-list (make-gradient '(0 0 47) '(209 209 237) 20)) rgb< pg 100 170 30 50)
