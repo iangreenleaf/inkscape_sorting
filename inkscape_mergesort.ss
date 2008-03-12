@@ -140,11 +140,10 @@
   (lambda (ls desktop startx starty widthx height)
     (if (null? ls)
         '()
-        (begin (display "one")
+        (begin
           (desktop-write-css desktop (string-append "stroke-opacity:0;fill-opacity:1;fill:" (rgb->hex (mknum (caar ls)) (mknum (cadar ls)) (mknum (caddar ls)))))
-          (display "two")
-               (cons (rectangle desktop "" startx starty widthx height 0 0)
-                     (list-to-rect (cdr ls) desktop (- (+ startx widthx) 1) starty widthx height))))))
+          (cons (rectangle desktop "" startx starty widthx height 0 0)
+                (list-to-rect (cdr ls) desktop (- (+ startx widthx) 1) starty widthx height))))))
 
 ;; Accepts a list of lists and displays outlines to delineate the boundaries
 ;; of the lists (according to width and height), starting at coordinates startx,starty
@@ -185,68 +184,13 @@
 
 
 
-
 ;;;;;;;;;;;;;;;;;;
 ;; Sample calls ;;
 ;;;;;;;;;;;;;;;;;;
-
-
-; sample list (blue gradient)
-(define ls2 
-  '((0 0 47)
-    (55 55 97)
-    (143 143 177)
-    (110 110 147)
-    (176 176 207)
-    (187 187 217)
-    (209 209 237)
-    (88 88 127)
-    (22 22 67)
-    (198 198 227)
-    (77 77 117)
-    (132 132 167)
-    (154 154 187)
-    (11 11 57)
-    (66 66 107)
-    (44 44 87)
-    (33 33 77)
-    (121 121 157)
-    (165 165 197)
-    (99 99 137))
-  )
-
-; sample list (red gradient)
-(define ls3
- '((202 144 144)
- (143 53 53)
- (163 83 83)
- (189 123 123)
- (248 218 218)
- (122 23 23)
- (222 176 176)
- (241 207 207)
- (150 63 63)
- (157 73 73)
- (228 186 186)
- (183 113 113)
- (176 103 103)
- (235 197 197)
- (209 155 155)
- (136 43 43)
- (170 93 93)
- (129 33 33)
- (215 165 165)
- (196 134 134))
-  )
-
 
 (define pg (get-desktop))
 
 (selection-delete-all pg)
 
-;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#FFFFFF;stroke-opacity:1")
-;(merge-sort-print ls2 rgb< pg 100 170 30 50)
-
 (desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000000;stroke-opacity:1")
-;(merge-sort-print ls3 rgb< pg 100 170 30 50)
 (merge-sort-print (randomize-list (make-gradient '(0 0 47) '(209 209 237) 20)) rgb< pg 100 170 30 50)
