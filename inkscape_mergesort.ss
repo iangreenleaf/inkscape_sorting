@@ -129,11 +129,6 @@
 ;;; Inkscape wrappers ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; An ugly hack for TinyScheme's benefit, since for some reason it won't recognize
-;; numbers passed from make-gradient
-(define (mknum n)
-  (string->number (number->string n)))
-
 ;; Accepts a list of rgb triplets and displays them as a row of rectangles
 ;; of specified width starting at coordinates startx,starty
 (define list-to-rect
@@ -141,7 +136,7 @@
     (if (null? ls)
         '()
         (begin
-          (desktop-write-css desktop (string-append "stroke-opacity:0;fill-opacity:1;fill:" (rgb->hex (mknum (caar ls)) (mknum (cadar ls)) (mknum (caddar ls)))))
+          (desktop-write-css desktop (string-append "stroke-opacity:0;fill-opacity:1;fill:" (rgb->hex (caar ls) (cadar ls) (caddar ls))))
           (cons (rectangle desktop "" startx starty widthx height 0 0)
                 (list-to-rect (cdr ls) desktop (- (+ startx widthx) 1) starty widthx height))))))
 
@@ -164,9 +159,12 @@
               (lambda (lowrgb highrgb num)
                 (if (zero? num)
                     (list highrgb)
-                    (let ((rstep (round (/ (- (car highrgb) (car lowrgb)) num)))
-                          (gstep (round (/ (- (cadr highrgb) (cadr lowrgb)) num)))
-                          (bstep (round (/ (- (caddr highrgb) (caddr lowrgb)) num))))
+                    (let ((rstep (inexact->exact (round 
+                                   (/ (- (car highrgb) (car lowrgb)) num))))
+                          (gstep (inexact->exact (round 
+                                   (/ (- (cadr highrgb) (cadr lowrgb)) num))))
+                          (bstep (inexact->exact (round
+                                   (/ (- (caddr highrgb) (caddr lowrgb)) num)))))
                       (cons lowrgb 
                             (kernel (list (+ rstep (car lowrgb))
                                           (+ gstep (cadr lowrgb))
