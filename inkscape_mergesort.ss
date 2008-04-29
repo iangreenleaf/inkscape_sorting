@@ -28,10 +28,23 @@
                  comparator)))
 
 (define (quick-step ls comparator)
-
-;  (if (equal? (length ls) 1)
+ (if 
+   (null? ls)
+ '()
+;   (equal? (length ls) 1)
 ;      (list '() ls '())
 ;      (letrec ((rand-index (good-random (length ls)))
+(let ((first (car ls))
+        (pivot (cadr ls))
+        (third (caddr ls))
+        (rest (cdddr ls)))
+  (append (quick-step-kernel first comparator)
+          (list pivot)
+          (quick-step-kernel third comparator)))))
+  
+  
+  
+(define (quick-step-kernel ls comparator)
       (letrec ((rand-index (random (length ls)))
                (sorter
                 (lambda (lt gt pivot remain)
@@ -41,7 +54,7 @@
                           (sorter (cons (car remain) lt) gt pivot (cdr remain))
                           (sorter lt (cons (car remain) gt) pivot (cdr remain)))))))
 
-        (sorter '() '() (list-ref ls rand-index) (delete-listref ls rand-index)))))
+        (sorter '() '() (list-ref ls rand-index) (delete-listref ls rand-index))))
 
         
 
