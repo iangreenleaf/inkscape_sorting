@@ -22,12 +22,54 @@
 (define (merge-sort ls comparator)
   (if (null? ls)
       '()
-      (letrec ((kernel
-                (lambda (ls)
-                  (if (equal? (length ls) 1)
-                      (car ls)
-                      (kernel (merge-step ls comparator))))))
-        (kernel (map list ls)))))
+      (sort-with merge-step
+                 (lambda (ls) (equal? 1 (length ls)))
+                 (map list ls)
+                 comparator)))
+
+(define (quick-step ls comparator)
+
+;  (if (equal? (length ls) 1)
+;      (list '() ls '())
+;      (letrec ((rand-index (good-random (length ls)))
+      (letrec ((rand-index (random (length ls)))
+               (sorter
+                (lambda (lt gt pivot remain)
+                  (if (null? remain)
+                      (list lt (list pivot) gt)
+                      (if (comparator (car remain) pivot)
+                          (sorter (cons (car remain) lt) gt pivot (cdr remain))
+                          (sorter lt (cons (car remain) gt) pivot (cdr remain)))))))
+
+        (sorter '() '() (list-ref ls rand-index) (delete-listref ls rand-index)))))
+
+        
+
+;;COMMENT ME
+(define and-apply
+  (lambda (first . rest)
+    (cond ((null? rest) first)
+          ((not first) #f)
+          (else (apply and-apply rest)))))
+;;COMMENT ME
+(define apply-and
+  (lambda (ls)
+    (cond ((null? ls) #t)
+          ((not (car ls)) #f)
+          (else (apply-and (cdr ls))))))
+
+(define (quick-sort ls comparator)
+  (if (null? ls)
+      '()
+      (sort-with quick-step
+                 (lambda (ls) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
+                 ls
+                 comparator)))
+
+(define (sort-with step-func base-case ls comparator)
+  (if (base-case ls)
+      ls
+      (sort-with step-func base-case (step-func ls comparator) comparator)))
 
 ;; Prints a graphical representation of the sorting process by stepping through
 ;; the sort, printing the list of items each iteration
@@ -46,6 +88,26 @@
                           (list-to-rect-outlines ls desktop startx starty w h)
                           (kernel (merge-step ls comparator) startx (+ starty h)))))))
           (kernel (map list ls) startx starty)))))
+
+(define merge-sort-print2
+  (lambda (ls comparator desktop startx starty w h)
+    (sort-print merge-step ls comparator desktop startx starty w h)))
+  
+
+(define sort-print
+  (lambda (step-func ls comparator desktop startx starty w h)
+    (if (null? ls)
+        '()
+        (if (equal? (length ls) 1)
+            (begin
+              (list-to-rect (car ls) desktop startx starty w h)
+              (list-to-rect-outlines ls desktop startx starty w h))
+            (begin
+              (list-to-rect (apply append ls) desktop startx starty w h)
+              (list-to-rect-outlines ls desktop startx starty w h)
+              (sort-print step-func (step-func ls comparator) startx (+ starty h) w h))))))
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -186,9 +248,9 @@
 ;; Sample calls ;;
 ;;;;;;;;;;;;;;;;;;
 
-(define pg (get-desktop))
+;(define pg (get-desktop))
 
-(selection-delete-all pg)
+;(selection-delete-all pg)
 
-(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000000;stroke-opacity:1")
-(merge-sort-print (randomize-list (make-gradient '(0 0 47) '(209 209 237) 20)) rgb< pg 100 170 30 50)
+;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000000;stroke-opacity:1")
+;(merge-sort-print (randomize-list (make-gradient '(0 0 47) '(209 209 237) 20)) rgb< pg 100 170 30 50)
