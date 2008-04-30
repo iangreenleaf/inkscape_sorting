@@ -38,10 +38,12 @@
                           (sorter lt (cons (car remain) gt) pivot (cdr remain))))))
                (quick-step-kernel
                 (lambda (ls)
-                  (if (null? ls)
-                      '()
-                      (let ((rand-index (random (length ls))))
-                        (sorter '() '() (list-ref ls rand-index) (delete-listref ls rand-index)))))))
+                  (cond
+                    ((null? ls) '())
+                    ((null? (cdr ls)) (list ls))
+                    (else
+                     (let ((rand-index (random (length ls))))
+                       (sorter '() '() (list-ref ls rand-index) (delete-listref ls rand-index))))))))
         (apply append (map quick-step-kernel ls)))))
   
 ;;COMMENT ME
