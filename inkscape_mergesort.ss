@@ -19,15 +19,6 @@
         (else (cons (merge (car ls) (cadr ls) comparator) (merge-step (cddr ls) comparator)))))
 
 ;;COMMENT ME
-(define (split-list-at ls index)
-  (letrec ((kernel
-            (lambda (done remain index)
-              (if (equal? index (length done))
-                  (list done (car remain) (cdr remain))
-                  (kernel (append done (list (car remain))) (cdr remain) index)))))
-    (kernel '() ls index)))
-
-;;COMMENT ME
 (define apply-and
   (lambda (ls)
     (cond ((null? ls) #t)
@@ -35,44 +26,24 @@
           (else (apply-and (cdr ls))))))
 
 ;;COMMENT ME
-(define (quick-step2 ls comparator)
-  (begin (newline) (display "ls: ") (display ls)
-  (cond
-    ((null? ls) '())
-    ((equal? 3 (length ls))
-     (begin (display "kernel!") (newline)
-     (append (quick-step-kernel (car ls) comparator)
-             (list (cadr ls))
-             (quick-step-kernel (caddr ls) comparator))))
-    (else
-     (let ((splitls (split-list-at ls (floor (/ (length ls) 2))))) ;;WHATIF not equal sides?
-       (begin (newline)
-         (display splitls)
-       (append (quick-step (car splitls) comparator)
-               (list (cadr splitls))
-               (quick-step (caddr splitls) comparator))))))))
-  
 (define (quick-step ls comparator)
   (if (null? ls)
       '()
-      (apply append (map quick-step-kernel ls))))
-  
-;;COMMENT ME
-(define (quick-step-kernel ls)
-  (if (null? ls)
-      '()
-      (letrec ((rand-index (random (length ls)))
-               (sorter
+      (letrec ((sorter
                 (lambda (lt gt pivot remain)
                   (if (null? remain)
                       (list lt (list pivot) gt)
-                      (if (< (car remain) pivot)
+                      (if (comparator (car remain) pivot)
                           (sorter (cons (car remain) lt) gt pivot (cdr remain))
-                          (sorter lt (cons (car remain) gt) pivot (cdr remain)))))))
-        
-        (sorter '() '() (list-ref ls rand-index) (delete-listref ls rand-index)))))
-
-
+                          (sorter lt (cons (car remain) gt) pivot (cdr remain))))))
+               (quick-step-kernel
+                (lambda (ls)
+                  (if (null? ls)
+                      '()
+                      (let ((rand-index (random (length ls))))
+                        (sorter '() '() (list-ref ls rand-index) (delete-listref ls rand-index)))))))
+        (apply append (map quick-step-kernel ls)))))
+  
 ;;COMMENT ME
 (define (sort-with step-func base-case ls comparator)
   (if (base-case ls)
