@@ -35,21 +35,30 @@
           (else (apply-and (cdr ls))))))
 
 ;;COMMENT ME
-(define (quick-step ls comparator)
+(define (quick-step2 ls comparator)
+  (begin (newline) (display "ls: ") (display ls)
   (cond
     ((null? ls) '())
     ((equal? 3 (length ls))
+     (begin (display "kernel!") (newline)
      (append (quick-step-kernel (car ls) comparator)
              (list (cadr ls))
-             (quick-step-kernel (caddr ls) comparator)))
+             (quick-step-kernel (caddr ls) comparator))))
     (else
-     (let ((splitls (split-list-at ls (floor (/ (length ls) 2)))))
+     (let ((splitls (split-list-at ls (floor (/ (length ls) 2))))) ;;WHATIF not equal sides?
+       (begin (newline)
+         (display splitls)
        (append (quick-step (car splitls) comparator)
                (list (cadr splitls))
-               (quick-step (caddr splitls) comparator))))))
+               (quick-step (caddr splitls) comparator))))))))
+  
+(define (quick-step ls comparator)
+  (if (null? ls)
+      '()
+      (apply append (map quick-step-kernel ls))))
   
 ;;COMMENT ME
-(define (quick-step-kernel ls comparator)
+(define (quick-step-kernel ls)
   (if (null? ls)
       '()
       (letrec ((rand-index (random (length ls)))
@@ -57,7 +66,7 @@
                 (lambda (lt gt pivot remain)
                   (if (null? remain)
                       (list lt (list pivot) gt)
-                      (if (comparator (car remain) pivot)
+                      (if (< (car remain) pivot)
                           (sorter (cons (car remain) lt) gt pivot (cdr remain))
                           (sorter lt (cons (car remain) gt) pivot (cdr remain)))))))
         
@@ -85,7 +94,7 @@
       '()
       (sort-with quick-step
                  (lambda (ls) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
-                 ls
+                 (list ls (list) (list))
                  comparator)))
 
 
