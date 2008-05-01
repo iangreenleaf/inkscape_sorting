@@ -1,9 +1,30 @@
 ;; This code is available on the World Wide Web as
 ;; http://www.cs.grinnell.edu/~youngian/inkscape_mergesort.ss
 
+
+;;;    This program is free software: you can redistribute it and/or modify
+;;;    it under the terms of the GNU General Public License as published by
+;;;    the Free Software Foundation, either version 3 of the License, or
+;;;    (at your option) any later version.
+;;;
+;;;    This program is distributed in the hope that it will be useful,
+;;;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;    GNU General Public License for more details.
+;;;
+;;;    You should have received a copy of the GNU General Public License
+;;;    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mergesort implementation ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Equivalent to calling 'and' with every item in ls as arguments
+(define apply-and
+  (lambda (ls)
+    (cond ((null? ls) #t)
+          ((not (car ls)) #f)
+          (else (apply-and (cdr ls))))))
 
 ;; Merge two lists according to comparator
 (define (merge ls1 ls2 comparator)
@@ -18,14 +39,9 @@
         ((null? (cdr ls)) ls)
         (else (cons (merge (car ls) (cadr ls) comparator) (merge-step (cddr ls) comparator)))))
 
-;;COMMENT ME
-(define apply-and
-  (lambda (ls)
-    (cond ((null? ls) #t)
-          ((not (car ls)) #f)
-          (else (apply-and (cdr ls))))))
-
-;;COMMENT ME
+;; Accomplishes one step of the quick-sort process, returns a list of lists
+;; (where each list is a "less-than", "pivot", or "greater-than" result from
+;; one of the partitioning steps.
 (define (quick-step ls comparator)
   (if (null? ls)
       '()
@@ -46,13 +62,15 @@
                        (sorter '() '() (list-ref ls rand-index) (delete-listref ls rand-index))))))))
         (apply append (map quick-step-kernel ls)))))
   
-;;COMMENT ME
+;; Not actually used
+;; This is to demonstrate how a sort-step procedure (like merge-step or quick-step)
+;; may be applied to simply sort a list using the given algorithm.
 (define (sort-with step-func base-case ls comparator)
   (if (base-case ls)
       ls
       (sort-with step-func base-case (step-func ls comparator) comparator)))
 
-;; Not actually used
+;; Application of merge-step to sort-with
 (define (merge-sort ls comparator)
   (if (null? ls)
       '()
@@ -61,7 +79,7 @@
                  (map list ls)
                  comparator)))
 
-;;COMMENT ME
+;; Application of quick-step to sort-with
 (define (quick-sort ls comparator)
   (if (null? ls)
       '()
@@ -73,37 +91,6 @@
 
 ;; Prints a graphical representation of the sorting process by stepping through
 ;; the sort, printing the list of items each iteration
-(define merge-sort-print
-  (lambda (ls comparator desktop startx starty w h)
-    (if (null? ls)
-        '()
-        (letrec ((kernel
-                  (lambda (ls startx starty)
-                    (if (equal? (length ls) 1)
-                        (begin
-                          (list-to-rect (car ls) desktop startx starty w h)
-                          (list-to-rect-outlines ls desktop startx starty w h))
-                        (begin
-                          (list-to-rect (apply append ls) desktop startx starty w h)
-                          (list-to-rect-outlines ls desktop startx starty w h)
-                          (kernel (merge-step ls comparator) startx (+ starty h)))))))
-          (kernel (map list ls) startx starty)))))
-
-(define merge-sort-print2
-  (lambda (ls comparator desktop startx starty w h)
-    (sort-print merge-step
-                (lambda (ls) (equal? 1 (length ls)))
-                (map list ls)
-                comparator desktop startx starty w h)))
-
-(define quick-sort-print
-  (lambda (ls comparator desktop startx starty w h)
-    (sort-print quick-step
-                 (lambda (ls) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
-                 (list ls (list) (list))
-                 comparator desktop startx starty w h)))
-
-;;COMMENT ME
 (define sort-print
   (lambda (step-func base-case ls comparator desktop startx starty w h)
     (if (null? ls)
@@ -118,6 +105,19 @@
               (sort-print step-func base-case (step-func ls comparator) comparator desktop startx (+ starty h) w h))))))
 
 
+(define merge-sort-print
+  (lambda (ls comparator desktop startx starty w h)
+    (sort-print merge-step
+                (lambda (ls) (equal? 1 (length ls)))
+                (map list ls)
+                comparator desktop startx starty w h)))
+
+(define quick-sort-print
+  (lambda (ls comparator desktop startx starty w h)
+    (sort-print quick-step
+                 (lambda (ls) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
+                 (list ls (list) (list))
+                 comparator desktop startx starty w h)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -263,4 +263,5 @@
 ;(selection-delete-all pg)
 
 ;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000000;stroke-opacity:1")
-;(merge-sort-print (randomize-list (make-gradient '(0 0 47) '(209 209 237) 20)) rgb< pg 100 170 30 50)
+;(define foo (randomize-list (make-gradient '(0 0 47) '(209 209 237) 20)))
+;(merge-sort-print rgb< pg 100 170 30 50)
