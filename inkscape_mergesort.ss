@@ -42,7 +42,7 @@
                     ((null? ls) '())
                     ((null? (cdr ls)) (list ls))
                     (else
-                     (let ((rand-index (random (length ls))))
+                     (let ((rand-index (good-random (length ls))))
                        (sorter '() '() (list-ref ls rand-index) (delete-listref ls rand-index))))))))
         (apply append (map quick-step-kernel ls)))))
   
@@ -91,21 +91,31 @@
 
 (define merge-sort-print2
   (lambda (ls comparator desktop startx starty w h)
-    (sort-print merge-step ls comparator desktop startx starty w h)))
-  
+    (sort-print merge-step
+                (lambda (ls) (equal? 1 (length ls)))
+                (map list ls)
+                comparator desktop startx starty w h)))
 
+(define quick-sort-print
+  (lambda (ls comparator desktop startx starty w h)
+    (sort-print quick-step
+                 (lambda (ls) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
+                 (list ls (list) (list))
+                 comparator desktop startx starty w h)))
+
+;;COMMENT ME
 (define sort-print
-  (lambda (step-func ls comparator desktop startx starty w h)
+  (lambda (step-func base-case ls comparator desktop startx starty w h)
     (if (null? ls)
         '()
-        (if (equal? (length ls) 1)
+        (if (base-case ls)
             (begin
-              (list-to-rect (car ls) desktop startx starty w h)
+              (list-to-rect (apply append (cons '() ls)) desktop startx starty w h)
               (list-to-rect-outlines ls desktop startx starty w h))
             (begin
               (list-to-rect (apply append ls) desktop startx starty w h)
               (list-to-rect-outlines ls desktop startx starty w h)
-              (sort-print step-func (step-func ls comparator) startx (+ starty h) w h))))))
+              (sort-print step-func base-case (step-func ls comparator) comparator desktop startx (+ starty h) w h))))))
 
 
 
