@@ -15,10 +15,11 @@
 ;;;    You should have received a copy of the GNU General Public License
 ;;;    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Mergesort implementation ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Sorting implementations ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Helper function
 ;; Equivalent to calling 'and' with every item in ls as arguments
 (define apply-and
   (lambda (ls)
@@ -92,17 +93,19 @@
 ;; Prints a graphical representation of the sorting process by stepping through
 ;; the sort, printing the list of items each iteration
 (define sort-print
-  (lambda (step-func base-case ls comparator desktop startx starty w h)
+  (lambda (step-func base-case ls comparator desktop startx starty w h draw-outlines?)
     (if (null? ls)
         '()
         (if (base-case ls)
             (begin
               (list-to-rect (apply append (cons '() ls)) desktop startx starty w h)
-              (list-to-rect-outlines ls desktop startx starty w h))
+              (if draw-outlines?
+                  (list-to-rect-outlines ls desktop startx starty w h)))
             (begin
               (list-to-rect (apply append ls) desktop startx starty w h)
-              (list-to-rect-outlines ls desktop startx starty w h)
-              (sort-print step-func base-case (step-func ls comparator) comparator desktop startx (+ starty h) w h))))))
+              (if draw-outlines?
+                  (list-to-rect-outlines ls desktop startx starty w h))
+              (sort-print step-func base-case (step-func ls comparator) comparator desktop startx (+ starty h) w h draw-outlines?))))))
 
 
 (define merge-sort-print
@@ -110,14 +113,16 @@
     (sort-print merge-step
                 (lambda (ls) (equal? 1 (length ls)))
                 (map list ls)
-                comparator desktop startx starty w h)))
+                comparator desktop startx starty w h
+                (stroke-visible? desktop))))
 
 (define quick-sort-print
   (lambda (ls comparator desktop startx starty w h)
     (sort-print quick-step
                  (lambda (ls) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
                  (list ls (list) (list))
-                 comparator desktop startx starty w h)))
+                 comparator desktop startx starty w h
+                 (stroke-visible? desktop))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -201,6 +206,17 @@
 ;;; Inkscape wrappers ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Determine if the current desktop has a visible outline set
+;; WARNING: I'm not confident this will delete the correct thing always
+;; Also, it's a hack.
+(define stroke-visible?
+  (lambda (desktop)
+    (let* ((foo (line pg "" 0 0 1 0))
+          (rval (equal? "1" (node-get-css pg foo "style" "stroke-opacity"))))
+      (begin (selection-prev desktop)
+             (selection-delete desktop)
+             rval))))
+
 ;; Accepts a list of rgb triplets and displays them as a row of rectangles
 ;; of specified width starting at coordinates startx,starty
 (define list-to-rect
@@ -264,4 +280,4 @@
 
 ;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000000;stroke-opacity:1")
 ;(define foo (randomize-list (make-gradient '(0 0 47) '(209 209 237) 20)))
-;(merge-sort-print rgb< pg 100 170 30 50)
+;(merge-sort-print foo rgb< pg 100 170 30 50)
