@@ -59,8 +59,8 @@
                     ((null? ls) '())
                     ((null? (cdr ls)) (list ls))
                     (else
-                     (let ((rand-index (good-random (length ls))))
-                       (sorter '() '() (list-ref ls rand-index) (delete-listref ls rand-index))))))))
+                     (let ((middle-index (floor (/ (length ls) 2))))
+                       (sorter '() '() (list-ref ls middle-index) (delete-listref ls middle-index))))))))
         (apply append (map quick-step-kernel ls)))))
   
 ;; Not actually used
@@ -268,6 +268,18 @@
       #t
       #f))
 
+;; Get the Luminance value for a given rgb triplet
+(define rgb->hsl-l
+  (lambda (rgb1)
+    (let* ((max (lambda (v1 v2)
+                  (if (> v1 v2) v1 v2)))
+           (min (lambda (v1 v2)
+                  (if (< v1 v2) v1 v2))))
+      (inexact->exact 
+       (round
+        (/ (+ (max (car rgb1) (max (cadr rgb1) (caddr rgb1)))
+              (min (car rgb1) (min (cadr rgb1) (caddr rgb1)))) 2))))))
+
 
 
 ;;;;;;;;;;;;;;;;;;
@@ -281,3 +293,4 @@
 ;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000000;stroke-opacity:1")
 ;(define foo (randomize-list (make-gradient '(0 0 47) '(209 209 237) 20)))
 ;(merge-sort-print foo rgb< pg 100 170 30 50)
+;(quick-sort-print foo rgb< pg 100 170 5 12)
