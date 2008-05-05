@@ -1,5 +1,5 @@
 ;; This code is available on the World Wide Web as
-;; http://www.cs.grinnell.edu/~youngian/inkscape_mergesort.ss
+;; http://www.cs.grinnell.edu/~youngian/inkscape_sorting.ss
 
 
 ;;;    This program is free software: you can redistribute it and/or modify
