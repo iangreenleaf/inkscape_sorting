@@ -62,12 +62,35 @@
                      (let ((middle-index (floor (/ (length ls) 2))))
                        (sorter '() '() (list-ref ls middle-index) (delete-listref ls middle-index))))))))
         (apply append (map quick-step-kernel ls)))))
+
+;; Bubble sort! Yes!!
+(define (bubble-step lst comparator)
+  (letrec ((kernel
+            (lambda (ls)
+              (cond ((null? ls) '())
+                    ((equal? 1 (length ls)) ls)
+                    ((comparator (car ls) (cadr ls))
+                     (cons (car ls) (kernel (cdr ls))))
+                    (else
+                     (cons (cadr ls) (kernel (cons (car ls) (cddr ls)))))))))
+    (list (kernel (car lst)))))
+
+;; Helper function. Accepts a list and comparator and checks to see if the list is
+;; sorted, in other words, the comparator holds for every step of the list.
+(define (is-sorted? ls comparator)
+  (if (or (null? ls) (equal? 1 (length ls)))
+      #t
+      (if (or (comparator (car ls) (cadr ls))
+              (not (comparator (cadr ls) (car ls))))
+          (is-sorted? (cdr ls) comparator)
+          #f)))
+
   
 ;; Not actually used
 ;; This is to demonstrate how a sort-step procedure (like merge-step or quick-step)
 ;; may be applied to simply sort a list using the given algorithm.
 (define (sort-with step-func base-case ls comparator)
-  (if (base-case ls)
+  (if (base-case ls comparator)
       ls
       (sort-with step-func base-case (step-func ls comparator) comparator)))
 
@@ -76,7 +99,7 @@
   (if (null? ls)
       '()
       (sort-with merge-step
-                 (lambda (ls) (equal? 1 (length ls)))
+                 (lambda (ls c) (equal? 1 (length ls)))
                  (map list ls)
                  comparator)))
 
@@ -85,10 +108,15 @@
   (if (null? ls)
       '()
       (sort-with quick-step
-                 (lambda (ls) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
+                 (lambda (ls c) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
                  (list ls (list) (list))
                  comparator)))
 
+(define (bubble-sort ls comparator)
+  (sort-with bubble-step
+             (lambda (ls c) (is-sorted? (car ls) c)) 
+             (list ls) 
+             comparator))
 
 ;; Prints a graphical representation of the sorting process by stepping through
 ;; the sort, printing the list of items each iteration
@@ -96,13 +124,13 @@
   (lambda (step-func base-case ls comparator desktop startx starty w h draw-outlines?)
     (if (null? ls)
         '()
-        (if (base-case ls)
+        (if (base-case ls comparator)
             (begin
               (list-to-rect (apply append (cons '() ls)) desktop startx starty w h)
               (if draw-outlines?
                   (list-to-rect-outlines ls desktop startx starty w h)))
             (begin
-              (list-to-rect (apply append ls) desktop startx starty w h)
+              (list-to-rect (apply append (cons '() ls)) desktop startx starty w h)
               (if draw-outlines?
                   (list-to-rect-outlines ls desktop startx starty w h))
               (sort-print step-func base-case (step-func ls comparator) comparator desktop startx (+ starty h) w h draw-outlines?))))))
@@ -111,7 +139,7 @@
 (define merge-sort-print
   (lambda (ls comparator desktop startx starty w h)
     (sort-print merge-step
-                (lambda (ls) (equal? 1 (length ls)))
+                (lambda (ls c) (equal? 1 (length ls)))
                 (map list ls)
                 comparator desktop startx starty w h
                 (stroke-visible? desktop))))
@@ -119,11 +147,18 @@
 (define quick-sort-print
   (lambda (ls comparator desktop startx starty w h)
     (sort-print quick-step
-                 (lambda (ls) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
+                 (lambda (ls c) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
                  (list ls (list) (list))
                  comparator desktop startx starty w h
                  (stroke-visible? desktop))))
 
+(define bubble-sort-print
+  (lambda (ls comparator desktop startx starty w h)
+    (sort-print bubble-step
+                (lambda (ls c) (is-sorted? (car ls) c)) 
+                (list ls) 
+                comparator desktop startx starty w h
+                (stroke-visible? desktop))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Randomization functions ;;;
@@ -294,3 +329,4 @@
 ;(define foo (randomize-list (make-gradient '(0 0 47) '(209 209 237) 20)))
 ;(merge-sort-print foo rgb< pg 100 170 30 50)
 ;(quick-sort-print foo rgb< pg 100 170 5 12)
+;(bubble-sort-print foo rgb< pg 100 170 5 12)
