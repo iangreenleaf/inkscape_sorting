@@ -246,9 +246,9 @@
 ;; Also, it's a hack.
 (define stroke-visible?
   (lambda (desktop)
-    (let* ((foo (line pg "" 0 0 1 0))
-          (rval (equal? "1" (node-get-css pg foo "style" "stroke-opacity"))))
-      (begin (selection-prev desktop)
+    (let* ((foo (line desktop "" 0 0 1 0))
+          (rval (equal? "1" (node-get-css desktop foo "style" "stroke-opacity"))))
+      (begin (select-set! desktop (list foo))
              (selection-delete desktop)
              rval))))
 
