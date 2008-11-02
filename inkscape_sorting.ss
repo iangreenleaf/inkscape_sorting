@@ -63,6 +63,19 @@
                        (sorter '() '() (list-ref ls middle-index) (delete-listref ls middle-index))))))))
         (apply append (map quick-step-kernel ls)))))
 
+;; Insertion sort
+;; Always has a list of two lists: that which is sorted and that which is not
+(define (insertion-step lst comparator)
+  (letrec ((insert
+            (lambda (item ls)
+              (if (or (null? ls) (comparator item (car ls)))
+                  (cons item ls)
+                  (cons (car ls) (insert item (cdr ls)))))))
+    (list 
+     (insert (car (cadr lst)) (car lst))
+     (cdr (cadr lst)))))
+
+
 ;; Bubble sort! Yes!!
 (define (bubble-step lst comparator)
   (letrec ((kernel
@@ -118,6 +131,10 @@
              (list ls) 
              comparator))
 
+(define insertion-sort 
+  (lambda (ls c)
+    (sort-with insertion-step (lambda (ls c) (null? (cadr ls))) (list '() ls) c)))
+
 ;; Prints a graphical representation of the sorting process by stepping through
 ;; the sort, printing the list of items each iteration
 (define sort-print
@@ -133,7 +150,7 @@
               (list-to-rect (apply append (cons '() ls)) desktop startx starty w h)
               (if draw-outlines?
                   (list-to-rect-outlines ls desktop startx starty w h))
-              (sort-print step-func base-case (step-func ls comparator) comparator desktop startx (+ starty h) w h draw-outlines?))))))
+              (sort-print step-func base-case (step-func ls comparator) comparator desktop startx (- (+ starty h) 1) w h draw-outlines?))))))
 
 
 (define merge-sort-print
@@ -151,6 +168,14 @@
                  (list ls (list) (list))
                  comparator desktop startx starty w h
                  (stroke-visible? desktop))))
+
+(define insertion-sort-print
+  (lambda (ls comparator desktop startx starty w h)
+    (sort-print insertion-step
+                (lambda (ls c) (null? (cadr ls)))
+                (list '() ls)
+                comparator desktop startx starty w h
+                (stroke-visible? desktop))))
 
 (define bubble-sort-print
   (lambda (ls comparator desktop startx starty w h)
@@ -241,14 +266,15 @@
 ;;; Inkscape wrappers ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 ;; Determine if the current desktop has a visible outline set
-;; WARNING: I'm not confident this will delete the correct thing always
-;; Also, it's a hack.
+;; So, it's a hack. Draws a small line, then polls that line
+;; for the css value it has inherited from the desktop.
 (define stroke-visible?
   (lambda (desktop)
     (let* ((foo (line desktop "" 0 0 1 0))
           (rval (equal? "1" (node-get-css desktop foo "style" "stroke-opacity"))))
-      (begin (select-set! desktop (list foo))
+      (begin (selection-set! desktop (list foo))
              (selection-delete desktop)
              rval))))
 
@@ -303,6 +329,12 @@
       #t
       #f))
 
+;; HSL comparator for rgb triplets
+(define (hue< rgb1 rgb2)
+  (if (< (car (rgb->hsl rgb1)) (car (rgb->hsl rgb2)))
+      #t
+      #f))
+
 ;; Get the Luminance value for a given rgb triplet
 (define rgb->hsl-l
   (lambda (rgb1)
@@ -315,18 +347,92 @@
         (/ (+ (max (car rgb1) (max (cadr rgb1) (caddr rgb1)))
               (min (car rgb1) (min (cadr rgb1) (caddr rgb1)))) 2))))))
 
+;; Convert an RGB triplet to a HSL triplet
+;; Thanks, Wikipedia!
+;; http://en.wikipedia.org/wiki/HSL_color_space#Conversion_from_RGB_to_HSL_or_HSV
+;; Could use some simplification and testing.
+(define rgb->hsl
+  (lambda (rgb)
+    (let* ((max (lambda (v1 v2)
+                  (if (> v1 v2) v1 v2)))
+           (min (lambda (v1 v2)
+                  (if (< v1 v2) v1 v2)))
+           (thisr (/ (car rgb) 255))
+           (thisg (/ (cadr rgb) 255))
+           (thisb (/ (caddr rgb) 255))
+           (thismax (max thisr (max thisg thisb)))
+           (thismin (min thisr (min thisg thisb))))
+      (list
+       (cond ((equal? thismax thismin)
+              0)
+             ((equal? thismax thisr)
+              (mod (* 60 (/ (- thisg thisb) (- thismax thismin))) 360))
+             ((equal? thismax thisg)
+              (+ (* 60 (/ (- thisb thisr) (- thismax thismin))) 120))
+             ((equal? thismax thisb)
+              (+ (* 60 (/ (- thisr thisg) (- thismax thismin))) 240)))
+       (cond ((equal? thismax thismin)
+              0)
+             ((<= (+ thismax thismin) 1)
+              (/ (- thismax thismin) (+ thismax thismin)))
+             (else
+              (/ (- thismax thismin) (- 2 (+ thismax thismin)))))
+       (/ (+ thismax thismin) 2)))))
+       
+;; Have to homegrow a modulo function because TinyScheme doesn't have it
+(define mod
+  (lambda (dividend divisor)
+    (if (< dividend divisor)
+        dividend
+        (mod (- dividend divisor) divisor))))
+
+;; Creates a list num long of rgb triplets spanning the entire range of hues.
+;; All colors have maximum saturation and value. So yeah, it's bright.
+(define all-hues
+  (lambda (num)
+    (letrec ((step (/ 360 num))
+             (kernel
+              (lambda (deg remain)
+                (if (zero? remain)
+                    '()
+                    (cons (hue->rgb deg) (kernel (+ deg step) (- remain 1)))))))
+      (kernel 0 num))))
+                      
+;; Convert a hue value (between 0 and 360) to an RGB triplet.
+;; Implementation is kinda awkward, but I couldn't think of any other way
+;; to do it without implementing a hsl->rgb converter, which was too much work.
+(define hue->rgb
+  (lambda (hue)
+    (map inexact->exact (map round
+    (cond ((and (<= 0 hue) (<= hue 60))
+           (list 255 (* (/ hue 60) 255) 0))
+          ((and (< 60 hue) (<= hue 120))
+           (list (- 255 (* (- (/ hue 60) 1) 255)) 255 0))
+          ((and (< 120 hue) (<= hue 180))
+           (list 0 255 (* (- (/ hue 60) 2) 255)))
+          ((and (< 180 hue) (<= hue 240))
+           (list 0 (- 255 (* (- (/ hue 60) 3) 255)) 255))
+          ((and (< 240 hue) (<= hue 300))
+           (list (* (- (/ hue 60) 4) 255) 0 255))
+          ((and (< 300 hue) (<= hue 360))
+           (list 255 0 (- 255 (* (- (/ hue 60) 5) 255))))
+          (else (hue->rgb 360)))))))
 
 
 ;;;;;;;;;;;;;;;;;;
 ;; Sample calls ;;
 ;;;;;;;;;;;;;;;;;;
 
-;(define pg (get-desktop))
+(define pg (get-desktop))
 
-;(selection-delete-all pg)
+(selection-delete-all pg)
 
 ;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000000;stroke-opacity:1")
 ;(define foo (randomize-list (make-gradient '(0 0 47) '(209 209 237) 20)))
 ;(merge-sort-print foo rgb< pg 100 170 30 50)
-;(quick-sort-print foo rgb< pg 100 170 5 12)
+;(quick-sort-print foo rgb< pg 100 170 30 50)
 ;(bubble-sort-print foo rgb< pg 100 170 5 12)
+
+;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000;stroke-width:0.3";stroke-opacity:1) 
+;(quick-sort-print (randomize-list (append (make-gradient '(245 30 48) '(0 0 0) 64) (make-gradient '(245 30 48) '(255 255 255) 64))) rgb< pg 100 170 5 20)
+
