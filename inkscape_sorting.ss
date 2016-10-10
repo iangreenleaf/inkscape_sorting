@@ -67,7 +67,7 @@
               (if (or (null? ls) (comparator item (car ls)))
                   (cons item ls)
                   (cons (car ls) (insert item (cdr ls)))))))
-    (list 
+    (list
      (insert (car (cadr lst)) (car lst))
      (cdr (cadr lst)))))
 
@@ -94,7 +94,7 @@
           (is-sorted? (cdr ls) comparator)
           #f)))
 
-  
+
 ;; Not actually used
 ;; This is to demonstrate how a sort-step procedure (like merge-step or quick-step)
 ;; may be applied to simply sort a list using the given algorithm.
@@ -123,11 +123,11 @@
 
 (define (bubble-sort ls comparator)
   (sort-with bubble-step
-             (lambda (ls c) (is-sorted? (car ls) c)) 
-             (list ls) 
+             (lambda (ls c) (is-sorted? (car ls) c))
+             (list ls)
              comparator))
 
-(define insertion-sort 
+(define insertion-sort
   (lambda (ls c)
     (sort-with insertion-step (lambda (ls c) (null? (cadr ls))) (list '() ls) c)))
 
@@ -176,8 +176,8 @@
 (define bubble-sort-print
   (lambda (ls comparator desktop startx starty w h)
     (sort-print bubble-step
-                (lambda (ls c) (is-sorted? (car ls) c)) 
-                (list ls) 
+                (lambda (ls c) (is-sorted? (car ls) c))
+                (list ls)
                 comparator desktop startx starty w h
                 (stroke-visible? desktop))))
 
@@ -187,7 +187,7 @@
 
 ;; Make Inkscape's randomization comply with standard Scheme behavior
 (define inkscape-random random) ;; off by one
-(define good-random 
+(define good-random
   (lambda (n)
     (- (inkscape-random n) 1))) ;; correct
 
@@ -304,13 +304,13 @@
               (lambda (lowrgb highrgb num)
                 (if (zero? num)
                     (list highrgb)
-                    (let ((rstep (inexact->exact (round 
+                    (let ((rstep (inexact->exact (round
                                    (/ (- (car highrgb) (car lowrgb)) num))))
-                          (gstep (inexact->exact (round 
+                          (gstep (inexact->exact (round
                                    (/ (- (cadr highrgb) (cadr lowrgb)) num))))
                           (bstep (inexact->exact (round
                                    (/ (- (caddr highrgb) (caddr lowrgb)) num)))))
-                      (cons lowrgb 
+                      (cons lowrgb
                             (kernel (list (+ rstep (car lowrgb))
                                           (+ gstep (cadr lowrgb))
                                           (+ bstep (caddr lowrgb)))
@@ -338,7 +338,7 @@
                   (if (> v1 v2) v1 v2)))
            (min (lambda (v1 v2)
                   (if (< v1 v2) v1 v2))))
-      (inexact->exact 
+      (inexact->exact
        (round
         (/ (+ (max (car rgb1) (max (cadr rgb1) (caddr rgb1)))
               (min (car rgb1) (min (cadr rgb1) (caddr rgb1)))) 2))))))
@@ -374,7 +374,7 @@
              (else
               (/ (- thismax thismin) (- 2 (+ thismax thismin)))))
        (/ (+ thismax thismin) 2)))))
-       
+
 ;; Have to homegrow a modulo function because TinyScheme doesn't have it
 (define mod
   (lambda (dividend divisor)
@@ -393,7 +393,7 @@
                     '()
                     (cons (hue->rgb deg) (kernel (+ deg step) (- remain 1)))))))
       (kernel 0 num))))
-                      
+
 ;; Convert a hue value (between 0 and 360) to an RGB triplet.
 ;; Implementation is kinda awkward, but I couldn't think of any other way
 ;; to do it without implementing a hsl->rgb converter, which was too much work.
@@ -429,6 +429,6 @@
 ;(quick-sort-print foo rgb< pg 100 170 30 50)
 ;(bubble-sort-print foo rgb< pg 100 170 5 12)
 
-;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000;stroke-width:0.3";stroke-opacity:1) 
+;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000;stroke-width:0.3";stroke-opacity:1)
 ;(quick-sort-print (randomize-list (append (make-gradient '(245 30 48) '(0 0 0) 64) (make-gradient '(245 30 48) '(255 255 255) 64))) rgb< pg 100 170 5 20)
 
