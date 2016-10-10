@@ -1,7 +1,3 @@
-;; This code is available on the World Wide Web as
-;; http://www.cs.grinnell.edu/~youngian/inkscape_sorting.ss
-
-
 ;;;    This program is free software: you can redistribute it and/or modify
 ;;;    it under the terms of the GNU General Public License as published by
 ;;;    the Free Software Foundation, either version 3 of the License, or
