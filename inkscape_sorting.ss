@@ -23,6 +23,8 @@
           ((not (car ls)) #f)
           (else (apply-and (cdr ls))))))
 
+(define safe-reverse (lambda (lst) (if (null? lst) lst (reverse lst))))
+
 ;; Merge two lists according to comparator
 (define (merge ls1 ls2 comparator)
   (cond ((null? ls1) ls2)
@@ -45,7 +47,7 @@
       (letrec ((sorter
                 (lambda (lt gt pivot remain)
                   (if (null? remain)
-                      (list lt (list pivot) gt)
+                      (list (safe-reverse lt) (list pivot) (safe-reverse gt))
                       (if (comparator (car remain) pivot)
                           (sorter (cons (car remain) lt) gt pivot (cdr remain))
                           (sorter lt (cons (car remain) gt) pivot (cdr remain))))))
