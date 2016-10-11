@@ -61,6 +61,25 @@
                        (sorter '() '() (list-ref ls middle-index) (delete-listref ls middle-index))))))))
         (apply append (map quick-step-kernel ls)))))
 
+(define (length-recursive lst)
+  (letrec ((kernel
+             (lambda (so-far remain)
+               (if (null? remain)
+                 so-far
+                 (kernel
+                   (+ so-far
+                      (if (list? (car remain))
+                        (kernel 0 (car remain))
+                        1))
+                   (cdr remain))))))
+           (kernel 0 lst)))
+
+(define (patched-quick-step ls comparator)
+  (let ((result (quick-step ls comparator)))
+    (if (equal? (length-recursive result) (length-recursive ls))
+      result
+      (patched-quick-step ls comparator))))
+
 ;; Insertion sort
 ;; Always has a list of two lists: that which is sorted and that which is not
 (define (insertion-step lst comparator)
@@ -118,7 +137,7 @@
 (define (quick-sort ls comparator)
   (if (null? ls)
       '()
-      (sort-with quick-step
+      (sort-with patched-quick-step
                  (lambda (ls c) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
                  (list ls (list) (list))
                  comparator)))
@@ -161,7 +180,7 @@
 
 (define quick-sort-print
   (lambda (ls comparator desktop startx starty w h)
-    (sort-print quick-step
+    (sort-print patched-quick-step
                  (lambda (ls c) (apply-and (map (lambda (l) (or (null? l) (null? (cdr l)))) ls)))
                  (list ls (list) (list))
                  comparator desktop startx starty w h
