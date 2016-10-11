@@ -158,16 +158,13 @@
   (lambda (step-func base-case ls comparator desktop startx starty w h draw-outlines?)
     (if (null? ls)
         '()
-        (if (base-case ls comparator)
-            (begin
-              (list-to-rect (apply append (cons '() ls)) desktop startx starty w h)
-              (if draw-outlines?
-                  (list-to-rect-outlines ls desktop startx starty w h)))
-            (begin
-              (list-to-rect (apply append (cons '() ls)) desktop startx starty w h)
-              (if draw-outlines?
-                  (list-to-rect-outlines ls desktop startx starty w h))
-              (sort-print step-func base-case (step-func ls comparator) comparator desktop startx (- (+ starty h) 1) w h draw-outlines?))))))
+        (begin
+          (list-to-rect (apply append (cons '() ls)) desktop startx starty w h)
+          (if draw-outlines?
+              (list-to-rect-outlines ls desktop startx starty w h))
+          (if (base-case ls comparator)
+            #t
+            (sort-print step-func base-case (step-func ls comparator) comparator desktop startx (- (+ starty h) 1) w h draw-outlines?))))))
 
 
 (define merge-sort-print
