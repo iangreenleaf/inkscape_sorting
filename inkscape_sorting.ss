@@ -441,12 +441,21 @@
 
 (selection-delete-all pg)
 
-;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000000;stroke-opacity:1")
+;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000;stroke-width:0.3";stroke-opacity:1)
+(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000;stroke-opacity:0")
+
+; The native query is a bit slow, so use this hack to speed it up
+(define stroke-visible? (lambda (_) #f))
+
 ;(define foo (randomize-list (make-gradient '(0 0 47) '(209 209 237) 20)))
+;(define foo (randomize-list (make-gradient '(0 0 47) '(209 209 237) 200)))
+;(define foo (randomize-list (append (make-gradient '(245 30 48) '(0 0 0) 64) (make-gradient '(245 30 48) '(255 255 255) 64))))
+
 ;(merge-sort-print foo rgb< pg 100 170 30 50)
-;(quick-sort-print foo rgb< pg 100 170 30 50)
+;(quick-sort-print foo rgb< pg 100 170 5 20)
 ;(bubble-sort-print foo rgb< pg 100 170 5 12)
 
-;(desktop-set-css pg "opacity:1;fill:#0000b6;fill-opacity:1;stroke:#000;stroke-width:0.3";stroke-opacity:1)
-;(quick-sort-print (randomize-list (append (make-gradient '(245 30 48) '(0 0 0) 64) (make-gradient '(245 30 48) '(255 255 255) 64))) rgb< pg 100 170 5 20)
+;(quick-sort-print foo rgb< pg 100 170 10 20)
 
+;(define double-gradient (randomize-list (append (make-gradient '(229 248 245) '(219 133 26) 200) (make-gradient '(219 133 26) '(176 37 0) 200))))
+;(quick-sort-print double-gradient rgb< pg 0 0 3 20)
