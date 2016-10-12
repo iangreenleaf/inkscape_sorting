@@ -162,6 +162,10 @@
           (list-to-rect (apply append (cons '() ls)) desktop startx starty w h)
           (if draw-outlines?
               (list-to-rect-outlines ls desktop startx starty w h))
+          (selection-all desktop)
+          (selection-to-prev-layer desktop)
+          (selection-clear desktop)
+          (layer-next desktop)
           (if (base-case ls comparator)
             #t
             (sort-print step-func base-case (step-func ls comparator) comparator desktop startx (- (+ starty h) 1) w h draw-outlines?))))))
