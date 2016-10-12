@@ -300,8 +300,8 @@
         '()
         (begin
           (desktop-write-css desktop (string-append "stroke-opacity:0;fill-opacity:1;fill:" (rgb->hex (caar ls) (cadar ls) (caddar ls))))
-          (cons (rectangle desktop "" startx starty widthx height 0 0)
-                (list-to-rect (cdr ls) desktop (- (+ startx widthx) 1) starty widthx height))))))
+          (rectangle desktop "" startx starty widthx height 0 0)
+          (list-to-rect (cdr ls) desktop (- (+ startx widthx) 1) starty widthx height)))))
 
 ;; Accepts a list of lists and displays outlines to delineate the boundaries
 ;; of the lists (according to width and height), starting at coordinates startx,starty
