@@ -163,6 +163,7 @@
           (if draw-outlines?
               (list-to-rect-outlines ls desktop startx starty w h))
           (selection-all desktop)
+          (selection-group desktop)
           (selection-to-prev-layer desktop)
           (selection-clear desktop)
           (layer-next desktop)
