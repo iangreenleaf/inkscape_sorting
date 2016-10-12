@@ -23,6 +23,11 @@
           ((not (car ls)) #f)
           (else (apply-and (cdr ls))))))
 
+(define (for-all? ls predicate)
+  (if (null? ls)
+      #t
+      (and (predicate (car ls)) (for-all? (cdr ls) predicate))))
+
 (define safe-reverse (lambda (lst) (if (null? lst) lst (reverse lst))))
 
 ;; Merge two lists according to comparator
@@ -159,7 +164,7 @@
     (if (null? ls)
         '()
         (begin
-          (list-to-rect (apply append (cons '() ls)) desktop startx starty w h)
+          (list-to-rect (flatten-triplets ls) desktop startx starty w h)
           (if draw-outlines?
               (list-to-rect-outlines ls desktop startx starty w h))
           (selection-all desktop)
@@ -171,6 +176,16 @@
             #t
             (sort-print step-func base-case (step-func ls comparator) comparator desktop startx (- (+ starty h) 1) w h draw-outlines?))))))
 
+; Inkscape-Scheme had some non-deterministic buggy behavior when drawing rows
+; from many-nested lists, so we flatten the list beforehand to work around that.
+(define (flatten-triplets ls)
+  (if (null? ls)
+      '()
+      (append
+       (if (rgb-triplet? (car ls))
+           (list (car ls))
+           (flatten-triplets (car ls)))
+       (flatten-triplets (cdr ls)))))
 
 (define merge-sort-print
   (lambda (ls comparator desktop startx starty w h)
@@ -341,6 +356,11 @@
                                     (- num 1))))))))
       (kernel lowrgb highrgb (- num 1)))))
 
+;; Duck typing
+(define (rgb-triplet? ls)
+  (and
+   (equal? 3 (length ls))
+   (for-all? ls number?)))
 
 ;; Comparator for rgb triplets
 (define (rgb< rgb1 rgb2)
